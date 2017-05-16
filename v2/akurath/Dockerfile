@@ -5,13 +5,13 @@ WORKDIR /workspace
 VOLUME /workspace
 
 RUN apt-get update && \
-        apt-get install -y make g++ python git curl wget && \
-        curl -sL https://deb.nodesource.com/setup | sudo bash - && \
-        apt-get install -y nodejs && \
-        npm -g install node-gyp akurath && \
-        cd /usr/lib/node_modules/akurath/node_modules/shux/node_modules/pty.js && \
-        make clean && \
-        make
+    apt-get install -y make g++ python git curl wget && \
+    curl -sL https://deb.nodesource.com/setup | sudo bash - && \
+    apt-get install -y nodejs && \
+    npm -g install node-gyp akurath && \
+    cd /usr/lib/node_modules/akurath/node_modules/shux/node_modules/pty.js && \
+    make clean && \
+    make
 
 RUN wget -qO- get.docker.com | sh && \
     apt-get install -y openssh-server sudo vim && \
