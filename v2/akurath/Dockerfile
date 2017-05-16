@@ -5,7 +5,7 @@ WORKDIR /workspace
 VOLUME /workspace
 
 RUN apt-get update && \
-        apt-get install -y make g++ python git curl && \
+        apt-get install -y make g++ python git curl wget && \
         curl -sL https://deb.nodesource.com/setup | sudo bash - && \
         apt-get install -y nodejs && \
         npm -g install node-gyp akurath && \
@@ -13,10 +13,7 @@ RUN apt-get update && \
         make clean && \
         make
 
-RUN apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D && \
-    echo "deb https://apt.dockerproject.org/repo ubuntu-trusty main" >> /etc/apt/sources.list.d/docker.list && \
-    apt-get update && \
-    apt-get install -yq docker-engine  && \
+RUN wget -qO- get.docker.com | sh  && \
     apt-get install -y openssh-server sudo vim && \
     mkdir /var/run/sshd && \
     echo 'StrictHostKeyChecking no' >> /etc/ssh/ssh_config
