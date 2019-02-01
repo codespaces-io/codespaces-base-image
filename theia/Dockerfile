@@ -33,17 +33,21 @@ RUN chmod +x /opt/motd.sh && \
     sh /opt/motd.sh && \
     rm -rf /opt/motd.sh
 
+COPY insecure_key.pem /root/.ssh/id_rsa
+
 RUN useradd -ms /bin/bash devops && \
     echo 'devops:codespaces' |chpasswd && \
     adduser devops sudo && \
     echo 'devops ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers && \
-    echo 'StrictHostKeyChecking no' >> /etc/ssh/ssh_config
+    echo 'StrictHostKeyChecking no' >> /etc/ssh/ssh_config && \ 
+    chmod 400 /root/.ssh/id_rsa 
 
-COPY insecure_key.pem /root/.ssh/id_rsa
 
 COPY entrypoint.sh /usr/local/bin
 
 EXPOSE 22 8000
+
+ENV SHELL=/bin/bash
 
 ENTRYPOINT entrypoint.sh
 
