@@ -1,5 +1,39 @@
-FROM ubuntu:18.04
+FROM ubuntu:18.04 AS build
+# install development tools
+RUN apt-get update && \
+    apt-get install -y curl sudo build-essential jq vim && \
+    curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash - && \
+    apt-get install -y nodejs && \
+    npm install -g yarn
 
+# add theia installation file
+COPY package.json run_theia.sh /theia-app/
+RUN chmod +x /theia-app/run_theia.sh
+
+# build theia
+WORKDIR /theia-app
+RUN yarn && \
+    NODE_OPTIONS="--max_old_space_size=4096" yarn theia build && \
+    yarn autoclean --init && \
+    echo *.ts >> .yarnclean && \
+    echo *.ts.map >> .yarnclean && \
+    echo *.spec.* >> .yarnclean && \
+    yarn autoclean --force && \
+    yarn cache clean
+
+# create debian package
+RUN npm run build-deb
+
+
+
+
+FROM ubuntu:18.04 AS package
+
+COPY --from=build /theia-app/theia-example_0.0.1_all.deb /
+RUN apt-get update && apt-get install -y curl sudo && \
+    curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash - && \
+    apt-get install -y ./theia-example_0.0.1_all.deb && \
+    rm theia-example_0.0.1_all.deb
 
 WORKDIR /opt/theia
 VOLUME /workspace
@@ -16,16 +50,7 @@ RUN apt-get install -yq apt-transport-https ca-certificates curl gnupg-agent sof
     mkdir /var/run/sshd && \
     echo 'StrictHostKeyChecking no' >> /etc/ssh/ssh_config
 
-COPY package.json .
 
-RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.5/install.sh | bash \ 
-    && export NVM_DIR="$HOME/.nvm" \
-    && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  \
-    && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" \
-    && nvm install 8 \
-    && npm install -g yarn \
-    && yarn  \
-    && yarn theia build 
 
 COPY motd.sh  /opt/
 
@@ -43,12 +68,13 @@ RUN useradd -ms /bin/bash devops && \
     chmod 400 /root/.ssh/id_rsa 
 
 
-COPY entrypoint.sh /usr/local/bin
+#COPY entrypoint.sh /usr/local/bin
 
 EXPOSE 22 8000
 
 ENV SHELL=/bin/bash
 
-ENTRYPOINT entrypoint.sh
+#ENTRYPOINT entrypoint.sh
 
-CMD yarn theia start /workspace --hostname 0.0.0.0 --port 8000
+CMD ["theia","start","--hostname=0.0.0.0","--port=8000"]
+
